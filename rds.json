@@ -423,7 +423,7 @@
           ],
           "enableAcceleratedNetworking": "[parameters('enableAcceleratedNetworking')]",
           "networkSecurityGroup": "[if(empty(parameters('networkSecurityGroupId')), json('null'), json(concat('{\"id\": \"', variables('nsgId'), '\"}')))]"
-        },
+        }
       },
       {
         "apiVersion": "2023-07-01",
