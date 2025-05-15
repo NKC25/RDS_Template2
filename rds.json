@@ -399,31 +399,6 @@
     },
     "resources": [
       {
-        "apiVersion": "2018-05-01",
-        "name": "[variables('newNsgDeploymentName')]",
-        "type": "Microsoft.Resources/deployments",
-        "properties": {
-          "mode": "Incremental",
-          "template": {
-            "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-            "contentVersion": "1.0.0.0",
-            "resources": [
-              {
-                "condition": "[parameters('createNetworkSecurityGroup')]",
-                "type": "Microsoft.Network/networkSecurityGroups",
-                "apiVersion": "2019-02-01",
-                "name": "[variables('newNsgName')]",
-                "location": "[parameters('location')]",
-                "tags": "[parameters('networkSecurityGroupTags')]",
-                "properties": {
-                  "securityRules": "[parameters('networkSecurityGroupRules')]"
-                }
-              }
-            ]
-          }
-        }
-      },
-      {
         "apiVersion": "2022-11-01",
         "type": "Microsoft.Network/networkInterfaces",
         "name": "[concat(parameters('rdshPrefix'), add(copyindex(), parameters('vmInitialNumber')), '-nic')]",
@@ -449,9 +424,6 @@
           "enableAcceleratedNetworking": "[parameters('enableAcceleratedNetworking')]",
           "networkSecurityGroup": "[if(empty(parameters('networkSecurityGroupId')), json('null'), json(concat('{\"id\": \"', variables('nsgId'), '\"}')))]"
         },
-        "dependsOn": [
-          "[variables('newNsgDeploymentName')]"
-        ]
       },
       {
         "apiVersion": "2023-07-01",
@@ -513,36 +485,6 @@
         "zones": "[if(equals(parameters('availabilityOption'), 'AvailabilityZone'), array(parameters('availabilityZones')[mod(copyIndex('rdsh-vm-loop'),variables('countOfSelectedAZ'))]), variables('emptyArray'))]"
       },
       {
-        "apiVersion": "2021-07-01",
-        "type": "Microsoft.Compute/virtualMachines/extensions",
-        "name": "[concat(parameters('rdshPrefix'), add(copyindex(), parameters('vmInitialNumber')), '/', 'Microsoft.PowerShell.DSC')]",
-        "location": "[parameters('location')]",
-        "dependsOn": [ "rdsh-vm-loop" ],
-        "copy": {
-          "name": "rdsh-dsc-loop",
-          "count": "[parameters('rdshNumberOfInstances')]"
-        },
-        "properties": {
-          "publisher": "Microsoft.Powershell",
-          "type": "DSC",
-          "typeHandlerVersion": "2.73",
-          "autoUpgradeMinorVersion": true,
-          "settings": {
-            "modulesUrl": "[parameters('artifactsLocation')]",
-            "configurationFunction": "Configuration.ps1\\AddSessionHost",
-            "properties": {
-              "hostPoolName": "[parameters('hostpoolName')]",
-              "registrationInfoToken": "[parameters('hostpoolToken')]",
-              "aadJoin": "[parameters('aadJoin')]",
-              "UseAgentDownloadEndpoint": true,
-              "aadJoinPreview": "[and(contains(parameters('systemData'), 'aadJoinPreview'), parameters('systemData').aadJoinPreview)]",
-              "mdmId": "[if(parameters('intune'), '0000000a-0000-0000-c000-000000000000', '')]",
-              "sessionHostConfigurationLastUpdateTime": "[parameters('SessionHostConfigurationVersion')]"
-            }
-          }
-        }
-      },
-      {
         "condition": "[and(parameters('aadJoin'), contains(parameters('systemData'), 'aadJoinPreview'), not(parameters('systemData').aadJoinPreview))]",
         "apiVersion": "2021-07-01",
         "type": "Microsoft.Compute/virtualMachines/extensions",
@@ -588,19 +530,8 @@
             "password": "[parameters('administratorAccountPassword')]"
           }
         }
-      },
-      {
-        "condition": "[not(empty(parameters('customConfigurationTemplateUrl')))]",
-        "type": "Microsoft.Resources/deployments",
-        "apiVersion": "2020-10-01",
-        "name": "post-deployment-custom-configuration",
-        "dependsOn": [
-          "rdsh-dsc-loop",
-          "rdsh-aad-join-loop",
-          "rdsh-domain-join-loop"
-        ],
-        "properties": "[variables('customConfigurationParameter')]"
       }
+      
     ],
     "outputs": {}
   }
