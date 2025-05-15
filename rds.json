@@ -485,7 +485,6 @@
         "zones": "[if(equals(parameters('availabilityOption'), 'AvailabilityZone'), array(parameters('availabilityZones')[mod(copyIndex('rdsh-vm-loop'),variables('countOfSelectedAZ'))]), variables('emptyArray'))]"
       },
       {
-        "condition": "[and(parameters('aadJoin'), contains(parameters('systemData'), 'aadJoinPreview'), not(parameters('systemData').aadJoinPreview))]",
         "apiVersion": "2021-07-01",
         "type": "Microsoft.Compute/virtualMachines/extensions",
         "name": "[concat(parameters('rdshPrefix'), add(copyindex(), parameters('vmInitialNumber')), '/', 'AADLoginForWindows')]",
